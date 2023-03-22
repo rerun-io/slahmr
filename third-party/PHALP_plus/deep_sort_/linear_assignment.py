@@ -3,9 +3,8 @@ Modified code from https://github.com/nwojke/deep_sort
 """
 
 from __future__ import absolute_import
-
 import numpy as np
-from scipy import optimize
+from sklearn.utils.linear_assignment_ import linear_assignment
 
 INFTY_COST = 1e+5
 
@@ -28,9 +27,7 @@ def min_cost_matching(
     cost_matrix                             = np.log(cost_matrix)
     max_distance                            = np.log(max_distance)
     
-    indices = optimize.linear_sum_assignment(cost_matrix)
-    indices = np.asarray(indices)
-    indices = np.transpose(indices)
+    indices = linear_assignment(cost_matrix)  
 
     matches, unmatched_tracks, unmatched_detections = [], [], []
     for col, detection_idx in enumerate(detection_indices):

@@ -4,11 +4,11 @@ Taken from https://github.com/davrempe/humor
 
 import copy
 
-import numpy as np
 import torch
+import numpy as np
 from torch.nn import functional as F
 
-from slahmr.body_model.utils import SMPL_JOINTS
+from body_model.utils import SMPL_JOINTS
 
 #
 # For computing local body frame

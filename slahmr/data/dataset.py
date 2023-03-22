@@ -1,20 +1,22 @@
-import glob
-import json
 import os
+import glob
 import typing
 
 import imageio
 import numpy as np
+import json
+
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
-from slahmr.geometry.camera import invert_camera
-from slahmr.body_model import OP_NUM_JOINTS, SMPL_JOINTS
-from slahmr.util.logger import Logger
+from body_model import OP_NUM_JOINTS, SMPL_JOINTS
+from util.logger import Logger
+from geometry.camera import invert_camera
 
-from .tools import load_smpl_preds, read_keypoints, read_mask_path
+from .tools import read_keypoints, read_mask_path, load_smpl_preds
 from .vidproc import preprocess_cameras, preprocess_frames, preprocess_tracks
+
 
 """
 Define data-related constants
