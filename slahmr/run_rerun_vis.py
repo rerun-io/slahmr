@@ -6,7 +6,7 @@ from typing import List, Optional
 import numpy as np
 import pytorch3d.structures
 import rerun as rr
-import rerun.experimental as rr2
+from rerun.components import MeshProperties, Material
 import torch
 from matplotlib import colormaps
 from omegaconf import OmegaConf
@@ -50,17 +50,15 @@ def log_to_rerun(
         rr.save(os.path.join(save_dir, "log.rrd"))
 
     # NOTE: first camera view defines world coordinate system
-    #  assuming camera is upright, -Y will be up
-    rr2.log("world", rr2.ViewCoordinates.RDF, timeless=True)
+    #  assuming camera is upright, and following RDF convention, Y will be down
+    rr.log("world", rr.ViewCoordinates.RIGHT_HAND_Y_DOWN, timeless=True)
 
     dataset.load_data()
 
     for phase, phase_label in zip(phases, phase_labels):
-        log_input_frames(dataset, phase_label)
-
-        log_skeleton_2d(dataset, phase_label)
-
         log_pinhole_camera(dataset, phase_label)
+        log_input_frames(dataset, phase_label)
+        log_skeleton_2d(dataset, phase_label)
 
         phase_dir = os.path.join(log_dir, phase)
         if phase == "input":
@@ -85,9 +83,9 @@ def log_pinhole_camera(dataset: dataset.MultiPeopleDataset, phase_label: str) ->
     width, height = dataset.img_size
     rr.set_time_sequence(f"frame_id_{phase_label}", 0)
     rr.set_time_sequence("frame_id", 0)
-    rr2.log(
+    rr.log(
         f"world/{phase_label}/camera/image",
-        rr2.Pinhole(
+        rr.Pinhole(
             np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]]),
             width=width,
             height=height,
@@ -152,29 +150,27 @@ def log_phase_result(
         translation = phase_result["cam_t"][1, frame_id].numpy(force=True)
         rotation_mat = phase_result["cam_R"][1, frame_id].numpy(force=True)
         rotation_q = transform.Rotation.from_matrix(rotation_mat).as_quat()
-        rr2.log(
+        rr.log(
             f"world/{phase_label}/camera",
-            rr2.dt.TranslationRotationScale3D(
+            rr.TranslationRotationScale3D(
                 translation=translation,
-                rotation=rr2.dt.Quaternion(xyzw=rotation_q),
+                rotation=rr.Quaternion(xyzw=rotation_q),
                 from_parent=True,
             ),
         )
         for i, _ in enumerate(dataset.track_ids):
             if vis_mask[i][frame_id] >= 0:
-                # TODO(roym899) https://github.com/rerun-io/rerun/issues/3416
-                pass
-                # rr2.log(
-                #     f"world/{phase_label}/#{i}",
-                #     rr2.Mesh3D(
-                #         vertices[i, frame_id],
-                #         mesh_properties=rr2.cmp.MeshProperties(faces),
-                #         vertex_normals=vertex_normals[i, frame_id],
-                #         mesh_material=rr2.cmp.Material(albedo_factor=_index_to_color(i)),
-                #     )
-                # )
+                rr.log(
+                    f"world/{phase_label}/#{i}",
+                    rr.Mesh3D(
+                        vertices[i, frame_id],
+                        mesh_properties=MeshProperties(faces),
+                        vertex_normals=vertex_normals[i, frame_id],
+                        mesh_material=Material(albedo_factor=_index_to_color(i)),
+                    )
+                )
             else:
-                rr2.log(f"world/{phase_label}/#{i}", rr2.Clear(False))
+                rr.log(f"world/{phase_label}/#{i}", rr.Clear(recursive=True))
     rr.set_time_sequence(f"frame_id_{phase_label}", None)
 
 
@@ -183,7 +179,7 @@ def log_input_frames(dataset: dataset.MultiPeopleDataset, phase_label: str) -> N
     for frame_id, img_path in enumerate(dataset.sel_img_paths):
         rr.set_time_sequence(f"frame_id_{phase_label}", frame_id)
         rr.set_time_sequence("frame_id", frame_id)
-        rr2.log(f"world/{phase_label}/camera/image", rr2.Image(Image.open(img_path)))
+        rr.log(f"world/{phase_label}/camera/image", rr.Image(Image.open(img_path)))
     rr.set_time_sequence(f"frame_id_{phase_label}", None)
 
 
@@ -225,16 +221,17 @@ def log_skeleton_2d(dataset: dataset.MultiPeopleDataset, phase_label: str) -> No
             rr.set_time_sequence(f"frame_id_{phase_label}", frame_id)
             rr.set_time_sequence("frame_id", frame_id)
             if len(good_joints_xy):
-                rr2.log(
+                rr.log(
                     f"world/{phase_label}/camera/image/skeleton/#{i}",
-                    rr2.LineStrips2D(
+                    rr.LineStrips2D(
                         good_joints_xy,
                         colors=_index_to_color(i),
                     ),
                 )
             else:
-                rr2.log(
-                    f"world/{phase_label}/camera/image/skeleton/#{i}", rr2.Clear(False)
+                rr.log(
+                    f"world/{phase_label}/camera/image/skeleton/#{i}",
+                    rr.Clear(recursive=True)
                 )
     rr.set_time_sequence(f"frame_id_{phase_label}", None)
 
