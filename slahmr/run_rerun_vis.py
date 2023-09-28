@@ -6,7 +6,7 @@ from typing import List, Optional
 import numpy as np
 import pytorch3d.structures
 import rerun as rr
-from rerun.components import MeshProperties, Material
+from rerun.components import Material
 import torch
 from matplotlib import colormaps
 from omegaconf import OmegaConf
@@ -86,7 +86,7 @@ def log_pinhole_camera(dataset: dataset.MultiPeopleDataset, phase_label: str) ->
     rr.log(
         f"world/{phase_label}/camera/image",
         rr.Pinhole(
-            np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]]),
+            image_from_camera=np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]]),
             width=width,
             height=height,
         ),
@@ -163,8 +163,8 @@ def log_phase_result(
                 rr.log(
                     f"world/{phase_label}/#{i}",
                     rr.Mesh3D(
-                        vertices[i, frame_id],
-                        mesh_properties=MeshProperties(faces),
+                        vertex_positions=vertices[i, frame_id],
+                        indices=faces,
                         vertex_normals=vertex_normals[i, frame_id],
                         mesh_material=Material(albedo_factor=_index_to_color(i)),
                     )
