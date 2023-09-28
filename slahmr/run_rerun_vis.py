@@ -10,7 +10,6 @@ from rerun.components import Material
 import torch
 from matplotlib import colormaps
 from omegaconf import OmegaConf
-from PIL import Image
 from scipy.spatial import transform
 
 from slahmr.body_model import run_smpl
@@ -179,7 +178,7 @@ def log_input_frames(dataset: dataset.MultiPeopleDataset, phase_label: str) -> N
     for frame_id, img_path in enumerate(dataset.sel_img_paths):
         rr.set_time_sequence(f"frame_id_{phase_label}", frame_id)
         rr.set_time_sequence("frame_id", frame_id)
-        rr.log(f"world/{phase_label}/camera/image", rr.Image(Image.open(img_path)))
+        rr.log(f"world/{phase_label}/camera/image", rr.ImageEncoded(path=img_path))
     rr.set_time_sequence(f"frame_id_{phase_label}", None)
 
 
