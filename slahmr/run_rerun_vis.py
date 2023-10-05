@@ -151,7 +151,7 @@ def log_phase_result(
         rotation_q = transform.Rotation.from_matrix(rotation_mat).as_quat()
         rr.log(
             f"world/{phase_label}/camera",
-            rr.TranslationRotationScale3D(
+            rr.Transform3D(
                 translation=translation,
                 rotation=rr.Quaternion(xyzw=rotation_q),
                 from_parent=True,
